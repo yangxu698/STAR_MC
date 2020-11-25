@@ -85,7 +85,7 @@ if (year_start == 1900){
    current_year = year_start
 }
 
-foreach(cnt = 1:num_draws, .packages = c('tidyverse', 'doParallel', 'iterators')) %dopar% {
+foreach(i = 1:num_draws, .packages = c('tidyverse', 'doParallel', 'iterators')) %dopar% {
 
 
   for (j in (year_start_position+1):60) {
