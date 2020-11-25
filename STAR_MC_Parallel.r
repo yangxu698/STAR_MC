@@ -86,7 +86,7 @@ if (year_start == 1900){
 }
 
 foreach(cnt = 1:num_draws, .packages = c('tidyverse', 'doParallel', 'iterators')) %dopar% {
-{
+
 
   for (j in (year_start_position+1):60) {
       current_year = current_year+20
@@ -145,4 +145,4 @@ foreach(cnt = 1:num_draws, .packages = c('tidyverse', 'doParallel', 'iterators')
       }
 }
 
-saveRDS(list(simulated_effects_vector, simulated_effects_matrix), "simulated_effets.rds")
+saveRDS(list(simulated_effects_vector, simulated_effects_matrix), "simulated_effects.rds")
