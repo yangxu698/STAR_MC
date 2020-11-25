@@ -3,8 +3,8 @@
 #$ -m abe
 #$ -pe smp 4
 #$ -q long ##*@@emichaellab
-#$ -N A_network
+#$ -N STAR_World 
 
 module load R
 
-R CMD BATCH spregPt2RW2_A.r
+R CMD BATCH STAR_MC_Parallel.r

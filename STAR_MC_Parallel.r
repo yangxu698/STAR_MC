@@ -13,7 +13,7 @@ c1<-makeCluster(core_num)
 registerDoParallel(c1)
 
 
-setwd("~/Intake/Coppedge/ForMC")
+## setwd("~/Intake/Coppedge/ForMC")
 
 weight_matrix = readRDS("IDs_Weight_matrices.rds")
 country_id = weight_matrix[[1]]
