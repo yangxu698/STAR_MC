@@ -86,7 +86,7 @@ for (j in (year_start_position+1):60) {
 
 library(iterators)
 library(doParallel)
-core_num = 2
+core_num = 24
 c1<-makeCluster(core_num)
 registerDoParallel(c1)
 
