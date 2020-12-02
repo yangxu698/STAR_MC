@@ -172,7 +172,7 @@ for (i in 1:2)
       ## end_index = j*country_num
       W_N_current = W_N_shaped %>% filter(str_detect(cyr, as.character(current_year))) %>% select(-cyr) %>% as.matrix()
       W_A_current = W_A_shaped %>% filter(str_detect(cyr, as.character(current_year))) %>% select(-cyr) %>% as.matrix()
-      LRSS_multiplier = solve(identity_m - draws[j,1]*W_N_current- draws[j,2]*W_A_current)
+      LRSS_multiplier = solve(identity_m - draws[i,1]*W_N_current- draws[i,2]*W_A_current)
       ## LRSS_multiplier = solve(identity_m - draws[j,1]*W_N_SAm[start_index:end_index, start_index:end_index]- draws[j,2]*W_A_SAm[start_index:end_index, start_index:end_index])
       delta_multiplier = draws[i,1]*W_N_current + draws[i,2]*W_A_current
       ## delta_multiplier = draws[i,1]*W_N_SAm[start_index:end_index, start_index:end_index] + draws[i,2]*W_A_SAm[start_index:end_index, start_index:end_index]

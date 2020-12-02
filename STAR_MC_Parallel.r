@@ -150,4 +150,4 @@ result = foreach(coefficient_vector = itx, .packages = c('tidyverse', 'doParalle
 
 }
 
-saveRDS(purrr::transpose(result), "simulated_effects.rds")
+saveRDS(purrr::transpose(result)$single_result, "simulated_effects.rds")
