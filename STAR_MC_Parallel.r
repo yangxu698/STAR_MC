@@ -90,7 +90,7 @@ vcvm = read.dta13("VCVM.dta")[1:3,1:3] %>% as.matrix()
 rho_W_N = 0.3577922
 rho_W_A = 0.0015372
 phi = 0.6500221
-num_draws <- 1000  #number of simulations to draw
+num_draws <- 5000  #number of simulations to draw
 coefficient_star = c(rho_W_N, rho_W_A, phi)
 
 
