@@ -64,24 +64,8 @@ for (j in (year_start_position+1):60) {
   colnames(single_result_long_dataframe) = c('Year',country_id)
   rownames(single_result_long_dataframe) =NULL
 
-  ## simulated_effects_vector[[i]] = single_result
-  ## simulated_effects_matrix[[i]] = single_result_long_dataframe
-  ## year_start = years_with_shock[1]
-  ## shock_vector = shock_input_manual %>% filter(Year==year_start) %>% select(-Year) %>% slice(1) %>% as.numeric
-  ## shock_matrix = diag(shock_vector)
-  ## country_num = length(country_id)
-  ## year_num = length(year_id[year_id > year_start])
-  ## single_result = matrix(0,nrow=1,ncol=country_num)
-  ## single_result_long_dataframe = as.data.frame(diag(rep(0,country_num)))
-  ## y_real = rep(0, country_num)
-  ## y_real_matrix = diag(y_real)
-  ## year_start_position = which(year_id == year_start)
-  ## if (year_start == 1900){
-      ## current_year = 18995
-      ## }else{
-      ## current_year = year_start
-    ## }
-  return(list(single_result = single_result, single_result_long_dataframe = single_result_long_dataframe))
+  ## return(list(single_result = single_result, single_result_long_dataframe = single_result_long_dataframe))
+  return(single_result)
 }
 
 library(iterators)
@@ -150,4 +134,5 @@ result = foreach(coefficient_vector = itx, .packages = c('tidyverse', 'doParalle
 
 }
 
-saveRDS(purrr::transpose(result)$single_result, "simulated_effects.rds")
+## saveRDS(purrr::transpose(result)$single_result, "simulated_effects.rds")
+saveRDS(result, "simulated_effects.rds")
