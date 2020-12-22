@@ -7,4 +7,4 @@
 
 module load R
 
-R CMD BATCH STAR_MC_Parallel.r
+R CMD BATCH STAR_MC_Parallel_1220N.r
