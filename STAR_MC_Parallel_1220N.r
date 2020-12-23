@@ -5,6 +5,8 @@ library(tidyverse)
 library(reshape2)
 library(ggplot2)
 library(purrr)
+library(iterators)
+library(doParallel)
 ## library(SparseM)
 
 ## Define Function ##
@@ -69,14 +71,11 @@ for (j in (year_start_position+1):60) {
   return(single_result)
 }
 
-library(iterators)
-library(doParallel)
 core_num = 24
 c1<-makeCluster(core_num)
 registerDoParallel(c1)
 
 
-## setwd("~/Intake/Coppedge/ForMC")
 
 weight_matrix = readRDS("IDs_Weight_matrices.rds")
 country_id = weight_matrix[[1]]
@@ -84,23 +83,18 @@ year_id = weight_matrix[[2]]
 cyr = weight_matrix[[3]]
 W_N_shaped = weight_matrix[[4]]
 #W_A_shaped = weight_matrix[[5]]
-#Nweight_matrix = list(country_id, year_id, cyr, W_N_shaped)
 
 ## Preparation for simulation
-#vcvm = read.dta13("Vcm_N.dta")[c(1,16),c(1,16)] %>% as.matrix()
 vcvm = read.csv('Vcm_N.csv', stringsAsFactors = FALSE)[c(1,16),c(1,16)] %>%
   as.matrix()
 rho_W_N = 0.0188566
 phi = 0.9442287
-num_draws <- 500  #number of simulations to draw
+num_draws <- 5000  #number of simulations to draw
 coefficient_star = c(rho_W_N, phi)
 
 library(dplyr)
 shock_input_manual = read.csv('shock_input.csv', stringsAsFactors = FALSE) %>%
   filter_at(vars(!contains('Year')), any_vars(!is.na(.)))
-#shock_brief = shock_input_manual %>% melt(id='Year') %>%
-#  drop_na('value') %>%
-#  arrange(Year)
 shock_brief = shock_input_manual %>%
   pivot_longer(-Year, names_to="variable", values_to="value") %>%
   drop_na('value') %>%
@@ -113,16 +107,8 @@ print('The briefing of input shock is: ')
 print(shock_brief)
 
 draws <- mvrnorm(n=num_draws,coefficient_star,vcvm,empirical=TRUE)
-
-#Designate unit experiencing counterfactual shock
-#All 1s:
-#The initial shock
-
-#Actual changes from 1900 to 1901.5:
-
 years_with_shock = shock_input_manual %>% pull(Year)
 
-## shock_in_matrix = diag(c(0, -0.0095, -0.0035, -0.0225, 0, -0.015, 0.09, 0, 0, 0, -0.021, 0),12,12)
 
 country_num = length(country_id)
 identity_m <- diag(1,country_num,country_num)  #nxn identity matrix
@@ -132,13 +118,11 @@ identity_m <- diag(1,country_num,country_num)  #nxn identity matrix
 # column numbers in each submatrix below.
 
 itx = iter(draws, by='row')
-install.packages("tidyverse")
-library(tidyverse)
+
 result = foreach(coefficient_vector = itx, .packages = c('tidyverse', 'doParallel', 'iterators')) %dopar% {
 
   simulation_process(coefficient_vector)
 
 }
 
-## saveRDS(purrr::transpose(result)$single_result, "simulated_effects.rds")
 saveRDS(result, "simulated_effectsN.rds")
