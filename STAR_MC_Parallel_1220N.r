@@ -3,8 +3,6 @@ library(tidyr)
 library(MASS)
 library(tidyverse)
 library(reshape2)
-library(ggplot2)
-library(purrr)
 library(iterators)
 library(doParallel)
 ## library(SparseM)
@@ -14,7 +12,7 @@ library(doParallel)
 simulation_process = function(parameter_vector) {
 
 year_start = years_with_shock[1]
-shock_vector = shock_input_manual %>% filter(Year==year_start) %>% select(-Year) %>% slice(1) %>% as.numeric
+shock_vector = shock_input_manual %>% filter(Year==year_start) %>% dplyr::select(-Year) %>% slice(1) %>% as.numeric
 shock_matrix = diag(shock_vector)
 year_num = length(year_id[year_id > year_start])
 single_result = matrix(0,nrow=1,ncol=country_num)
@@ -31,11 +29,11 @@ if (year_start == 1900){
 
 for (j in (year_start_position+1):60) {
     current_year = current_year+20
-    y_star = parameter_vector[3]*(shock_vector+y_real)
-    y_star_matrix = parameter_vector[3]*(shock_matrix + y_real_matrix)
+    y_star = parameter_vector[2]*(shock_vector+y_real)
+    y_star_matrix = parameter_vector[2]*(shock_matrix + y_real_matrix)
     ## start_index = (j-1)*country_num+1
     ## end_index = j*country_num
-    W_N_current = W_N_shaped %>% filter(str_detect(cyr, as.character(current_year))) %>% select(-cyr) %>% as.matrix()
+    W_N_current = W_N_shaped %>% filter(str_detect(cyr, as.character(current_year))) %>% dplyr::select(-cyr) %>% as.matrix()
     #W_A_current = W_A_shaped %>% filter(str_detect(cyr, as.character(current_year))) %>% select(-cyr) %>% as.matrix()
     #LRSS_multiplier = solve(identity_m - parameter_vector[1]*W_N_current- parameter_vector[2]*W_A_current)
     LRSS_multiplier = solve(identity_m - parameter_vector[1]*W_N_current)
@@ -45,7 +43,7 @@ for (j in (year_start_position+1):60) {
     delta_temp = LRSS_multiplier %*% delta_multiplier %*% y_star
     delta_temp_matrix = LRSS_multiplier %*% delta_multiplier %*% y_star_matrix
     if (current_year %in% years_with_shock){
-      shock_vector = (shock_input_manual%>%filter(Year==current_year)%>%select(-Year)%>%slice(1)%>%as.numeric())
+      shock_vector = (shock_input_manual%>%filter(Year==current_year)%>%dplyr::select(-Year)%>%slice(1)%>%as.numeric())
     }else{
       shock_vector = rep(0, country_num)
     }
@@ -89,10 +87,9 @@ vcvm = read.csv('Vcm_N.csv', stringsAsFactors = FALSE)[c(1,16),c(1,16)] %>%
   as.matrix()
 rho_W_N = 0.0188566
 phi = 0.9442287
-num_draws <- 5000  #number of simulations to draw
+num_draws <- 5000 #number of simulations to draw
 coefficient_star = c(rho_W_N, phi)
 
-library(dplyr)
 shock_input_manual = read.csv('shock_input.csv', stringsAsFactors = FALSE) %>%
   filter_at(vars(!contains('Year')), any_vars(!is.na(.)))
 shock_brief = shock_input_manual %>%
