@@ -8,7 +8,7 @@ library(doParallel)
 ## library(SparseM)
 
 ## Define Function ##
-
+rm(list=ls())
 simulation_process = function(parameter_vector) {
 
 year_start = years_with_shock[1]
