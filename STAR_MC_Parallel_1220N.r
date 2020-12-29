@@ -34,6 +34,9 @@ for (j in (year_start_position+1):60) {
     ## start_index = (j-1)*country_num+1
     ## end_index = j*country_num
     W_N_current = W_N_shaped %>% filter(str_detect(cyr, as.character(current_year))) %>% dplyr::select(-cyr) %>% as.matrix()
+    pop_weights_current = pop_weights %>% filter(str_detect(cyr, as.character(current_year))) %>%
+      arrange(cyr) %>% dplyr::pull(GMpoplog) %>% rep(181) %>% matrix(nrow=181,ncol=181, byrow=TRUE)
+    W_N_current = W_N_current * pop_weights_current
     #W_A_current = W_A_shaped %>% filter(str_detect(cyr, as.character(current_year))) %>% select(-cyr) %>% as.matrix()
     #LRSS_multiplier = solve(identity_m - parameter_vector[1]*W_N_current- parameter_vector[2]*W_A_current)
     LRSS_multiplier = solve(identity_m - parameter_vector[1]*W_N_current)
@@ -69,12 +72,7 @@ for (j in (year_start_position+1):60) {
   return(single_result)
 }
 
-core_num = 24
-c1<-makeCluster(core_num)
-registerDoParallel(c1)
-
-
-
+pop_weights = readRDS("Pop_weights.rds")
 weight_matrix = readRDS("IDs_Weight_matrices.rds")
 country_id = weight_matrix[[1]]
 year_id = weight_matrix[[2]]
@@ -114,6 +112,11 @@ identity_m <- diag(1,country_num,country_num)  #nxn identity matrix
 #j is the country number, used to define the first and last row and
 # column numbers in each submatrix below.
 
+core_num = 24
+c1<-makeCluster(core_num)
+registerDoParallel(c1)
+
+
 itx = iter(draws, by='row')
 
 result = foreach(coefficient_vector = itx, .packages = c('tidyverse', 'doParallel', 'iterators')) %dopar% {
@@ -122,4 +125,57 @@ result = foreach(coefficient_vector = itx, .packages = c('tidyverse', 'doParalle
 
 }
 
-saveRDS(result, "simulated_effectsN.rds")
+arraymedian <- apply(simplify2array(result), 1:2, median)
+arraylower <- apply(simplify2array(result), 1:2, quantile, probs = 0.025)
+arrayupper <- apply(simplify2array(result), 1:2, quantile, probs = 0.975)
+arraylower90 <- apply(simplify2array(result), 1:2, quantile, probs = 0.05)
+arrayupper90 <- apply(simplify2array(result), 1:2, quantile, probs = 0.95)
+
+medianlong <- as.data.frame(arraymedian) %>%
+  rename(c("year" = "Year")) %>%
+  pivot_longer(-c(year),
+               names_to = "country_text_id",
+               values_to = "median") %>%
+  arrange(country_text_id, year)
+
+lowerlong <- as.data.frame(arraylower) %>%
+  rename(c("year" = "Year")) %>%
+  pivot_longer(-c(year),
+               names_to = "country_text_id",
+               values_to = "lower") %>%
+  arrange(country_text_id, year)
+
+upperlong <- as.data.frame(arrayupper) %>%
+  rename(c("year" = "Year")) %>%
+  pivot_longer(-c(year),
+               names_to = "country_text_id",
+               values_to = "upper") %>%
+  arrange(country_text_id, year)
+
+lowerlong90 <- as.data.frame(arraylower90) %>%
+  rename(c("year" = "Year")) %>%
+  pivot_longer(-c(year),
+               names_to = "country_text_id",
+               values_to = "lower90") %>%
+  arrange(country_text_id, year)
+
+upperlong90 <- as.data.frame(arrayupper90) %>%
+  rename(c("year" = "Year")) %>%
+  pivot_longer(-c(year),
+               names_to = "country_text_id",
+               values_to = "upper90") %>%
+  arrange(country_text_id, year)
+
+MedLowUplong <- cbind(medianlong, lowerlong$lower, upperlong$upper, lowerlong90$lower90, upperlong90$upper90) %>%
+  rename(c("lower95" = "lowerlong$lower", "upper95" = "upperlong$upper", "lower90" = "lowerlong90$lower90", "upper90" = "upperlong90$upper90"))
+
+MedLowUplong$year10 <- as.numeric(MedLowUplong$year)/10
+MedLowUplong <- MedLowUplong %>%
+  mutate(year = ifelse(year10 == 190.0, 1900, year10))
+MedLowUplong$year10 <- NULL
+
+MedLowUplong$country_text_id <- factor(MedLowUplong$country_text_id,
+                                       labels = c("Afghanistan", "Angola", "Albania", "United Arab Emirates", "Argentina", "Armenia", "Australia", "Austria", "Azerbaijan", "Burundi", "Belgium", "Benin", "Burkina Faso", "Bangladesh", "Bulgaria", "Bahrain", "Bosnia and Herzegovina", "Belarus", "Bolivia", "Brazil", "Barbados", "Bhutan", "Botswana", "Central African Republic", "Canada", "Switzerland", "Chile", "China", "Ivory Coast", "Cameroon", "Democratic Republic of the Congo", "Republic of the Congo", "Colombia", "Comoros", "Cape Verde", "Costa Rica", "Cuba", "Cyprus", "Czech Republic", "German Democratic Republic", "Germany", "Djibouti", "Denmark", "Dominican Republic", "Algeria", "Ecuador", "Egypt", "Eritrea", "Spain", "Estonia", "Ethiopia", "Finland", "Fiji", "France", "Gabon", "United Kingdom", "Georgia", "Ghana", "Guinea", "The Gambia", "Guinea-Bissau", "Equatorial Guinea", "Greece", "Guatemala", "Guyana", "Hong Kong", "Honduras", "Croatia", "Haiti", "Hungary", "Indonesia", "India", "Ireland", "Iran", "Iraq", "Iceland", "Israel", "Italy", "Jamaica", "Jordan", "Japan", "Kazakhstan", "Kenya", "Cambodia", "South Korea", "Kuwait", "Laos", "Lebanon", "Liberia", "Libya", "Sri Lanka", "Lesotho", "Lithuania", "Luxembourg", "Latvia", "Morocco", "Moldova", "Madagascar", "Maldives", "Mexico", "Macedonia", "Mali", "Burma/Myanmar", "Montenegro", "Mongolia", "Mozambique", "Mauritania", "Mauritius", "Malawi", "Malaysia", "Namibia", "Niger", "Nigeria", "Nicaragua", "Netherlands", "Norway", "Nepal", "New Zealand", "Oman", "Pakistan", "Panama", "Peru", "Philippines", "Papua New Guinea", "Poland", "North Korea", "Portugal", "Paraguay", "Palestine-British Mandate", "Palestine-West Bank", "Palestine-Gaza", "Qatar", "Romania", "Russia", "Rwanda", "Saudi Arabia", "Sudan", "Senegal", "Singapore", "Solomon Islands", "Sierra Leone", "El Salvador", "Somaliland", "Somalia", "Serbia", "South Sudan", "Sao Tome and Principe", "Suriname", "Slovakia", "Slovenia", "Sweden", "Swaziland", "Seychelles", "Syria", "Chad", "Togo", "Thailand", "Tajikistan", "Turkmenistan", "Timor Leste", "Trinidad and Tobago", "Tunisia", "Turkey", "Taiwan", "Tanzania", "Uganda", "Ukraine", "Uruguay", "United States", "Uzbekistan", "Vietnam, Democratic Republic of", "Venezuela", "Vietnam", "Vanuatu", "Kosovo", "Yemen", "Democratic Yemen", "South Africa", "Zambia", "Zimbabwe", "Zanzibar"))
+
+saveRDS(MedLowUplong, "simulated_effects_upA.rds")
+## saveRDS(result, "simulated_effectsN.rds")
